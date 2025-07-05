@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { appState } from './state.js';
 import { ui } from './ui.js';
 import { fileSystem } from './fileSystem.js';
+import { indexedDBService } from './indexedDB.js';
 
 // Make appState globally accessible for AI chat
 window.appState = appState;
@@ -18,18 +19,29 @@ export class Editor {
             // We wrap the editor initialization in requestAnimationFrame to ensure the DOM
             // is fully painted and stable. This can help prevent the benign 'ResizeObserver'
             // warning from the Toast UI library in some complex layouts.
-            requestAnimationFrame(() => {
+            requestAnimationFrame(async () => {
                 const Editor = toastui.Editor;
                 
                 // Check if this is the user's first visit
                 const hasVisitedBefore = localStorage.getItem('aiTextbookEditor_hasVisited');
                 const isFirstTimeUser = !hasVisitedBefore;
                 
-                // Set initial edit type: WYSIWYG for first-time users, markdown for returning users
-                const initialEditType = isFirstTimeUser ? 'wysiwyg' : 'markdown';
+                // Check for URL query parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const requestedFile = urlParams.get('file');
                 
-                // Mark that the user has now visited
-                if (isFirstTimeUser) {
+                // Determine initial content and edit type
+                let initialContent = CONFIG.EDITOR.INITIAL_VALUE;
+                let initialEditType = 'markdown'; // Default for returning users
+                
+                if (requestedFile) {
+                    // User specified a file via URL parameter
+                    initialEditType = 'wysiwyg'; // Always use WYSIWYG for specific files
+                    initialContent = await this.loadFileContent(requestedFile);
+                } else if (isFirstTimeUser) {
+                    // First-time user - show quick start guide
+                    initialEditType = 'wysiwyg';
+                    initialContent = await this.loadQuickStartGuide();
                     localStorage.setItem('aiTextbookEditor_hasVisited', 'true');
                 }
                 
@@ -38,7 +50,7 @@ export class Editor {
                     height: '100%',
                     initialEditType: initialEditType,
                     previewStyle: 'vertical',
-                    initialValue: CONFIG.EDITOR.INITIAL_VALUE,
+                    initialValue: initialContent,
                     usageStatistics: false,
                     toolbarItems: [
                         ['heading', 'bold', 'italic', 'strike'],
@@ -166,6 +178,78 @@ export class Editor {
     setSelection(start, end) {
         if (this.editor) {
             this.editor.setSelection(start, end);
+        }
+    }
+
+    // Load file content from URL parameter
+    async loadFileContent(fileName) {
+        try {
+            // First try to get from IndexedDB
+            const savedFile = await indexedDBService.getFile(fileName);
+            if (savedFile) {
+                return savedFile.content;
+            }
+            
+            // If not in IndexedDB, try to fetch from server
+            const response = await fetch(fileName);
+            if (response.ok) {
+                const content = await response.text();
+                // Save to IndexedDB for future use
+                await indexedDBService.saveFile(fileName, content, 'url-param');
+                return content;
+            }
+            
+            // Fallback to default content
+            return `# ${fileName}\n\nFile not found. Start writing your content here...`;
+        } catch (error) {
+            console.error('Error loading file:', error);
+            return `# ${fileName}\n\nError loading file. Start writing your content here...`;
+        }
+    }
+
+    // Load quick start guide content
+    async loadQuickStartGuide() {
+        try {
+            // Try to fetch the quick-start.md file
+            const response = await fetch(CONFIG.EDITOR.QUICK_START_FILE);
+            if (response.ok) {
+                const content = await response.text();
+                // Save to IndexedDB for future use
+                await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, content, 'quick-start');
+                return content;
+            }
+            
+            // Fallback content if file not found
+            return `# Quick Start Guide - AI Textbook Editor
+
+Welcome to your **AI-First Textbook Editor**! This is a local-first, privacy-focused document editor that runs entirely in your browser.
+
+## 🚀 Getting Started
+
+### First Steps
+1. **Start Writing**: Just begin typing in the editor - your content is automatically saved locally
+2. **Switch Modes**: Use the tabs at the top to switch between Markdown and WYSIWYG editing
+3. **AI Assistant**: Click the chat icon in the sidebar to get AI help with your writing
+
+### Key Features
+
+#### 📁 File Management
+- **Open Folder**: Click the folder icon to open a directory of markdown files
+- **New File**: Create new documents with the + icon
+- **Save File**: Download your work as a markdown file
+- **Auto-Save**: Your work is automatically saved locally in your browser
+
+#### 🤖 AI Integration
+- **Smart Assistance**: Get help with writing, editing, and formatting
+- **Knowledge Base**: The AI can reference your other documents for context
+- **Perfect Markdown**: AI responses are formatted in clean markdown
+
+---
+
+**Ready to start writing?** Just begin typing below or use the AI assistant to help you get started!`;
+        } catch (error) {
+            console.error('Error loading quick start guide:', error);
+            return CONFIG.EDITOR.INITIAL_VALUE;
         }
     }
 }

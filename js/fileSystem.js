@@ -98,19 +98,36 @@ export class FileSystem {
                 content = savedFile.content;
                 console.log(`Loaded file from IndexedDB: ${fileName}`);
             } else {
-                // Fall back to reading from file system if directory handle exists
-                const directoryHandle = appState.getDirectoryHandle();
-                if (directoryHandle) {
-                    const fileHandle = await directoryHandle.getFileHandle(fileName);
-                    const file = await fileHandle.getFile();
-                    content = await file.text();
-                    
-                    // Save to IndexedDB for future use
-                    const directoryName = appState.getCurrentDirectoryName();
-                    await indexedDBService.saveFile(fileName, content, directoryName);
+                // Try to fetch from server for special files like quick-start.md
+                if (fileName === CONFIG.EDITOR.QUICK_START_FILE) {
+                    try {
+                        const response = await fetch(CONFIG.EDITOR.QUICK_START_FILE);
+                        if (response.ok) {
+                            content = await response.text();
+                            await indexedDBService.saveFile(fileName, content, 'quick-start');
+                        } else {
+                            ui.showToast(`Could not load quick-start guide`, CONFIG.MESSAGE_TYPES.ERROR);
+                            return;
+                        }
+                    } catch (error) {
+                        ui.showToast(`Could not load quick-start guide`, CONFIG.MESSAGE_TYPES.ERROR);
+                        return;
+                    }
                 } else {
-                    ui.showToast(`Could not open file: ${fileName}`, CONFIG.MESSAGE_TYPES.ERROR);
-                    return;
+                    // Fall back to reading from file system if directory handle exists
+                    const directoryHandle = appState.getDirectoryHandle();
+                    if (directoryHandle) {
+                        const fileHandle = await directoryHandle.getFileHandle(fileName);
+                        const file = await fileHandle.getFile();
+                        content = await file.text();
+                        
+                        // Save to IndexedDB for future use
+                        const directoryName = appState.getCurrentDirectoryName();
+                        await indexedDBService.saveFile(fileName, content, directoryName);
+                    } else {
+                        ui.showToast(`Could not open file: ${fileName}`, CONFIG.MESSAGE_TYPES.ERROR);
+                        return;
+                    }
                 }
             }
             
