@@ -16,6 +16,8 @@ export class AIChat {
         this.promptDropdown = document.getElementById('prompt-dropdown');
         this.customPromptSection = document.getElementById('custom-prompt-section');
         this.customPromptInput = document.getElementById('custom-prompt-input');
+        this.defaultPromptSection = document.getElementById('default-prompt-section');
+        this.defaultPromptDisplay = document.getElementById('default-prompt-display');
         
         this.apiKey = localStorage.getItem('gemini-api-key') || '';
         this.tempApiKey = '';
@@ -51,6 +53,9 @@ export class AIChat {
         this.promptDropdown.addEventListener('change', () => this.handlePromptChange());
         this.customPromptInput.addEventListener('input', () => this.saveCustomPrompt());
         this.knowledgeBaseCheckbox.addEventListener('change', () => this.saveKnowledgeBaseSetting());
+        
+        // Add resize observer to handle dynamic layout adjustments
+        this.setupResizeObserver();
     }
 
     // Check if API key exists and update UI
@@ -108,9 +113,11 @@ export class AIChat {
     handlePromptChange() {
         if (this.promptDropdown.value === 'custom') {
             this.customPromptSection.classList.remove('hidden');
+            this.defaultPromptSection.classList.add('hidden');
             this.systemPrompt = this.customPrompt || this.defaultPrompt;
         } else {
             this.customPromptSection.classList.add('hidden');
+            this.defaultPromptSection.classList.remove('hidden');
             this.systemPrompt = this.defaultPrompt;
         }
     }
@@ -126,10 +133,16 @@ export class AIChat {
     
     // Load saved settings
     loadSettings() {
+        // Set default prompt display
+        this.defaultPromptDisplay.textContent = this.defaultPrompt;
+        
         if (this.customPrompt) {
             this.promptDropdown.value = 'custom';
             this.customPromptSection.classList.remove('hidden');
+            this.defaultPromptSection.classList.add('hidden');
             this.customPromptInput.value = this.customPrompt;
+        } else {
+            this.defaultPromptSection.classList.remove('hidden');
         }
         this.knowledgeBaseCheckbox.checked = this.useKnowledgeBase;
     }
@@ -197,10 +210,12 @@ export class AIChat {
         // Add knowledge base if enabled
         if (this.useKnowledgeBase) {
             const files = await this.getAllMarkdownFiles();
+            console.log(`Knowledge base enabled - found ${files.length} files`);
             if (files.length > 0) {
                 const knowledgeBase = files.map(file => 
                     `## ${file.fileName}\n${file.content}`
                 ).join('\n\n');
+                console.log('Adding knowledge base to AI context:', knowledgeBase.substring(0, 200) + '...');
                 contents.push({
                     role: "user",
                     parts: [{ text: `Knowledge Base:\n${knowledgeBase}` }]
@@ -534,6 +549,19 @@ export class AIChat {
             };
             request.onerror = () => resolve(null);
         });
+    }
+    
+    // Setup resize observer to handle dynamic layout adjustments
+    setupResizeObserver() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && window.ResizeObserver) {
+            const resizeObserver = new ResizeObserver(() => {
+                // Force a reflow to ensure proper flex calculations
+                this.chatInput.offsetHeight;
+                this.chatSendBtn.offsetHeight;
+            });
+            resizeObserver.observe(sidebar);
+        }
     }
     
     // Clear chat and start new

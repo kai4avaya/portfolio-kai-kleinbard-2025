@@ -2,7 +2,7 @@
 export class IndexedDBService {
     constructor() {
         this.dbName = 'AI_Textbook_Editor';
-        this.dbVersion = 2;
+        this.dbVersion = 3;
         this.storeName = 'markdown_files';
         this.db = null;
     }
@@ -25,6 +25,7 @@ export class IndexedDBService {
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
+                console.log('IndexedDB upgrade needed, version:', event.oldVersion, '->', event.newVersion);
                 
                 // Create object store if it doesn't exist
                 if (!db.objectStoreNames.contains(this.storeName)) {
@@ -203,59 +204,85 @@ export class IndexedDBService {
 
     // Check if this is the first time the user has opened the app
     async isFirstTimeUser() {
-        if (!this.db) {
-            await this.initialize();
+        try {
+            if (!this.db) {
+                await this.initialize();
+            }
+
+            // Ensure the database is ready
+            if (!this.db.objectStoreNames.contains(this.storeName)) {
+                console.log('Object store not found, treating as first time user');
+                return true;
+            }
+
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.getAll();
+
+                request.onsuccess = () => {
+                    const isFirstTime = request.result.length === 0;
+                    console.log(`First time user check: ${isFirstTime}`);
+                    resolve(isFirstTime);
+                };
+
+                request.onerror = () => {
+                    console.error('Error checking first time user status:', request.error);
+                    // If there's an error accessing the store, treat as first time user
+                    resolve(true);
+                };
+            });
+        } catch (error) {
+            console.error('Error in isFirstTimeUser:', error);
+            // If there's any error, treat as first time user
+            return true;
         }
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const store = transaction.objectStore(this.storeName);
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                const isFirstTime = request.result.length === 0;
-                console.log(`First time user check: ${isFirstTime}`);
-                resolve(isFirstTime);
-            };
-
-            request.onerror = () => {
-                console.error('Error checking first time user status:', request.error);
-                reject(request.error);
-            };
-        });
     }
 
     // Get the most recently modified file
     async getLastEditedFile() {
-        if (!this.db) {
-            await this.initialize();
-        }
+        try {
+            if (!this.db) {
+                await this.initialize();
+            }
 
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const store = transaction.objectStore(this.storeName);
-            const request = store.getAll();
+            // Ensure the database is ready
+            if (!this.db.objectStoreNames.contains(this.storeName)) {
+                console.log('Object store not found, no last edited file');
+                return null;
+            }
 
-            request.onsuccess = () => {
-                if (request.result.length === 0) {
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.getAll();
+
+                request.onsuccess = () => {
+                    if (request.result.length === 0) {
+                        resolve(null);
+                        return;
+                    }
+
+                    // Sort by lastModified date, most recent first
+                    const sortedFiles = request.result.sort((a, b) => 
+                        new Date(b.lastModified) - new Date(a.lastModified)
+                    );
+
+                    console.log(`Last edited file: ${sortedFiles[0].fileName}`);
+                    resolve(sortedFiles[0]);
+                };
+
+                request.onerror = () => {
+                    console.error('Error retrieving last edited file:', request.error);
+                    // If there's an error accessing the store, return null
                     resolve(null);
-                    return;
-                }
-
-                // Sort by lastModified date, most recent first
-                const sortedFiles = request.result.sort((a, b) => 
-                    new Date(b.lastModified) - new Date(a.lastModified)
-                );
-
-                console.log(`Last edited file: ${sortedFiles[0].fileName}`);
-                resolve(sortedFiles[0]);
-            };
-
-            request.onerror = () => {
-                console.error('Error retrieving last edited file:', request.error);
-                reject(request.error);
-            };
-        });
+                };
+            });
+        } catch (error) {
+            console.error('Error in getLastEditedFile:', error);
+            // If there's any error, return null
+            return null;
+        }
     }
 }
 

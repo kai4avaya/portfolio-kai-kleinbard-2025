@@ -1,6 +1,12 @@
 // Kai Kleinbard Profile - Markdown Content
 const KAI_PROFILE_MARKDOWN = `# Kai Kleinbard
 
+## About This AI Editor
+
+This profile was created using my **AI-First Textbook Editor** - a local-first, privacy-focused document editor that runs entirely in your browser. Everything you write is saved locally on your device, and you can download it as a Progressive Web App (PWA) for offline use. The editor preserves publicly accessible images and integrates AI assistance while keeping your content private and secure.
+
+---
+
 ## About Me
 
 Hello, I'm **Kai Kleinbard** - software developer, AI specialist, and educator.

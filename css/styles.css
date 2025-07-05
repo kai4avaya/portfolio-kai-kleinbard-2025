@@ -33,6 +33,15 @@ body {
     font-weight: 500;
 }
 
+/* File list hover controls */
+.list-item .group-hover\:flex {
+    display: none;
+}
+
+.list-item:hover .group-hover\:flex {
+    display: flex !important;
+}
+
 .panel {
     transition: transform 0.3s ease-in-out;
     transform: translateX(-100%);
@@ -57,6 +66,13 @@ body {
     transition: transform 0.3s ease-in-out;
     min-width: 200px;
     max-width: 600px;
+    overflow: hidden; /* Prevent content from spilling out */
+}
+
+/* AI Panel specific constraints */
+#ai-panel {
+    min-width: 0; /* Allow panel to shrink */
+    overflow: hidden; /* Prevent content overflow */
 }
 
 /* Resize handle styles */
@@ -178,6 +194,35 @@ body {
     color: #6b7280;
 }
 
+/* Editor link styles */
+#editor a {
+    color: #2563eb;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+#editor a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+#editor a:visited {
+    color: #7c3aed;
+}
+
+/* Make links more prominent in WYSIWYG mode */
+.toastui-editor-contents a {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+}
+
+.toastui-editor-contents a:hover {
+    color: #1d4ed8 !important;
+    text-decoration: underline !important;
+}
+
 .outline-tree-container .fancytree-expander {
     color: #9ca3af;
 }
@@ -250,6 +295,28 @@ body {
     height: auto;
     border-radius: 4px;
     margin: 8px 0;
+}
+
+/* Chat input area responsive layout */
+#ai-panel .p-4.border-t {
+    min-width: 0; /* Allow flex items to shrink below content size */
+}
+
+#ai-panel .flex.space-x-2 {
+    min-width: 0; /* Allow flex items to shrink */
+    width: 100%;
+}
+
+#chat-input {
+    min-width: 0; /* Allow input to shrink */
+    flex: 1;
+    width: 0; /* Force flex-basis calculation */
+}
+
+#chat-send-btn {
+    flex-shrink: 0; /* Prevent button from shrinking */
+    white-space: nowrap; /* Keep button text on one line */
+    min-width: fit-content; /* Ensure button doesn't get smaller than content */
 }
 
 /* Responsive adjustments */

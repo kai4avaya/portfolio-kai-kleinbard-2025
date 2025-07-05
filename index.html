@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Textbook Editor</title>
+    
+    <!-- Favicons and PWA -->
+    <link rel="apple-touch-icon" sizes="180x180" href="images/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicons/favicon-16x16.png">
+    <link rel="icon" href="images/favicons/favicon.ico">
+    <link rel="manifest" href="images/favicons/site.webmanifest">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI Textbook Editor">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Toast UI Editor CSS -->
@@ -104,6 +115,9 @@
                         <option value="custom">Custom Prompt</option>
                     </select>
                 </div>
+                <div id="default-prompt-section" class="mb-3">
+                    <p id="default-prompt-display" class="text-xs text-gray-600 bg-gray-50 p-2 rounded border"></p>
+                </div>
                 <div id="custom-prompt-section" class="mb-3 hidden">
                     <textarea id="custom-prompt-input" class="w-full p-2 text-xs border border-yellow-300 rounded" rows="3" placeholder="Enter your custom system prompt..."></textarea>
                 </div>
@@ -117,9 +131,9 @@
                 <!-- Chat messages will be dynamically added here -->
             </div>
             <div class="p-4 border-t border-gray-200">
-                <div class="flex space-x-2">
-                    <input type="text" id="chat-input" class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ask the AI..." disabled>
-                    <button id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-2 rounded-lg transition-colors duration-200 disabled:opacity-50" disabled>Send</button>
+                <div class="flex space-x-2 min-w-0">
+                    <input type="text" id="chat-input" class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-w-0" placeholder="Ask the AI..." disabled>
+                    <button id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-2 rounded-lg transition-colors duration-200 disabled:opacity-50 flex-shrink-0" disabled>Send</button>
                 </div>
             </div>
         </div>
@@ -150,6 +164,21 @@
     
     <!-- Main Application Script -->
     <script type="module" src="js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
 
 </body>
 </html>

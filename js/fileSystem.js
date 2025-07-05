@@ -51,12 +51,7 @@ export class FileSystem {
                 if (entry.kind === 'file' && this.isMarkdownFile(entry.name)) {
                     foundFiles = true;
                     fileSet.add(entry.name);
-                    const li = document.createElement('li');
-                    li.textContent = entry.name;
-                    li.className = 'list-item p-2 rounded-md text-sm';
-                    li.dataset.fileName = entry.name;
-                    li.dataset.source = 'filesystem';
-                    li.addEventListener('click', () => this.openFile(entry.name, li));
+                    const li = this.createFileListItem(entry.name, 'filesystem', false);
                     this.fileList.appendChild(li);
                 }
             }
@@ -70,12 +65,7 @@ export class FileSystem {
                     if (!fileSet.has(savedFile.fileName)) {
                         foundFiles = true;
                         fileSet.add(savedFile.fileName);
-                        const li = document.createElement('li');
-                        li.textContent = `${savedFile.fileName} (saved)`;
-                        li.className = 'list-item p-2 rounded-md text-sm text-blue-600';
-                        li.dataset.fileName = savedFile.fileName;
-                        li.dataset.source = 'indexeddb';
-                        li.addEventListener('click', () => this.openFile(savedFile.fileName, li));
+                        const li = this.createFileListItem(savedFile.fileName, 'indexeddb', true);
                         this.fileList.appendChild(li);
                     }
                 }
@@ -98,9 +88,6 @@ export class FileSystem {
 
     // Open a specific file
     async openFile(fileName, fileElement) {
-        const directoryHandle = appState.getDirectoryHandle();
-        if (!directoryHandle) return;
-        
         try {
             // First try to get the file from IndexedDB
             const savedFile = await indexedDBService.getFile(fileName);
@@ -111,14 +98,20 @@ export class FileSystem {
                 content = savedFile.content;
                 console.log(`Loaded file from IndexedDB: ${fileName}`);
             } else {
-                // Fall back to reading from file system
-                const fileHandle = await directoryHandle.getFileHandle(fileName);
-                const file = await fileHandle.getFile();
-                content = await file.text();
-                
-                // Save to IndexedDB for future use
-                const directoryName = appState.getCurrentDirectoryName();
-                await indexedDBService.saveFile(fileName, content, directoryName);
+                // Fall back to reading from file system if directory handle exists
+                const directoryHandle = appState.getDirectoryHandle();
+                if (directoryHandle) {
+                    const fileHandle = await directoryHandle.getFileHandle(fileName);
+                    const file = await fileHandle.getFile();
+                    content = await file.text();
+                    
+                    // Save to IndexedDB for future use
+                    const directoryName = appState.getCurrentDirectoryName();
+                    await indexedDBService.saveFile(fileName, content, directoryName);
+                } else {
+                    ui.showToast(`Could not open file: ${fileName}`, CONFIG.MESSAGE_TYPES.ERROR);
+                    return;
+                }
             }
             
             const editor = appState.getEditor();
@@ -131,14 +124,8 @@ export class FileSystem {
             appState.setActiveFileElement(fileElement);
             fileElement.classList.add('active');
 
-            // Update file state
-            if (!savedFile) {
-                const fileHandle = await directoryHandle.getFileHandle(fileName);
-                appState.setCurrentFileHandle(fileHandle);
-            } else {
-                // For IndexedDB files, we don't have a file handle, so we'll create a virtual one
-                appState.setCurrentFileHandle({ name: fileName });
-            }
+            // Update file state - always create virtual file handle for IndexedDB files
+            appState.setCurrentFileHandle({ name: fileName });
             this.updateSaveButtonState(false, false);
             
             // Update outline for the new file
@@ -257,12 +244,7 @@ export class FileSystem {
             }
             
             for (const savedFile of savedFiles) {
-                const li = document.createElement('li');
-                li.textContent = `${savedFile.fileName} (saved)`;
-                li.className = 'list-item p-2 rounded-md text-sm text-blue-600';
-                li.dataset.fileName = savedFile.fileName;
-                li.dataset.source = 'indexeddb';
-                li.addEventListener('click', () => this.openFile(savedFile.fileName, li));
+                const li = this.createFileListItem(savedFile.fileName, 'indexeddb', true);
                 this.fileList.appendChild(li);
             }
             
@@ -416,6 +398,181 @@ export class FileSystem {
         }
     }
 
+    // Create file list item with hover controls
+    createFileListItem(fileName, source, isSaved) {
+        const li = document.createElement('li');
+        li.className = 'list-item p-2 rounded-md text-sm relative group cursor-pointer';
+        li.dataset.fileName = fileName;
+        li.dataset.source = source;
+        
+        // File name container
+        const nameContainer = document.createElement('div');
+        nameContainer.className = 'flex items-center justify-between';
+        
+        // File name span
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = isSaved ? `${fileName} (saved)` : fileName;
+        nameSpan.className = isSaved ? 'text-blue-600' : '';
+        nameContainer.appendChild(nameSpan);
+        
+        // Controls container (hidden by default)
+        const controls = document.createElement('div');
+        controls.className = 'hidden group-hover:flex items-center space-x-1';
+        
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.innerHTML = '<i class="fas fa-edit text-gray-500 hover:text-blue-600"></i>';
+        editBtn.className = 'p-1 hover:bg-gray-100 rounded';
+        editBtn.title = 'Rename file';
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.startRename(li, nameSpan, fileName);
+        });
+        
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerHTML = '<i class="fas fa-times text-gray-500 hover:text-red-600"></i>';
+        deleteBtn.className = 'p-1 hover:bg-gray-100 rounded';
+        deleteBtn.title = 'Delete file';
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.deleteFile(fileName, li);
+        });
+        
+        controls.appendChild(editBtn);
+        controls.appendChild(deleteBtn);
+        nameContainer.appendChild(controls);
+        li.appendChild(nameContainer);
+        
+        // Click handler for opening file
+        li.addEventListener('click', () => this.openFile(fileName, li));
+        
+        return li;
+    }
+    
+    // Start rename process
+    startRename(li, nameSpan, currentFileName) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentFileName;
+        input.className = 'bg-white border border-blue-500 rounded px-2 py-1 text-sm w-full';
+        
+        // Replace name span with input
+        nameSpan.style.display = 'none';
+        li.querySelector('.flex').insertBefore(input, li.querySelector('.hidden'));
+        input.focus();
+        input.select();
+        
+        const finishRename = async () => {
+            const newFileName = input.value.trim();
+            if (newFileName && newFileName !== currentFileName) {
+                if (!newFileName.toLowerCase().endsWith('.md')) {
+                    ui.showToast('File name must end with .md', CONFIG.MESSAGE_TYPES.ERROR);
+                    input.remove();
+                    nameSpan.style.display = '';
+                    return;
+                }
+                
+                await this.renameFile(currentFileName, newFileName, li);
+            }
+            
+            // Restore original display
+            input.remove();
+            nameSpan.style.display = '';
+        };
+        
+        input.addEventListener('blur', finishRename);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                finishRename();
+            } else if (e.key === 'Escape') {
+                input.remove();
+                nameSpan.style.display = '';
+            }
+        });
+    }
+    
+    // Rename file in IndexedDB
+    async renameFile(oldFileName, newFileName, li) {
+        try {
+            const directoryName = appState.getCurrentDirectoryName() || 'unsaved_documents';
+            
+            // Check if new name already exists in current directory (excluding current file)
+            const directoryFiles = await indexedDBService.getFilesByDirectory(directoryName);
+            const existingFile = directoryFiles.find(file => file.fileName === newFileName && file.fileName !== oldFileName);
+            if (existingFile) {
+                ui.showToast('File name already exists', CONFIG.MESSAGE_TYPES.ERROR);
+                return;
+            }
+            
+            // Get the file content
+            const savedFile = await indexedDBService.getFile(oldFileName);
+            if (!savedFile) {
+                ui.showToast('File not found', CONFIG.MESSAGE_TYPES.ERROR);
+                return;
+            }
+            
+            // Save with new name
+            await indexedDBService.saveFile(newFileName, savedFile.content, directoryName);
+            
+            // Delete old file
+            await indexedDBService.deleteFile(oldFileName);
+            
+            // Update UI
+            li.dataset.fileName = newFileName;
+            const nameSpan = li.querySelector('span');
+            nameSpan.textContent = `${newFileName} (saved)`;
+            
+            // If this is the currently open file, update the file handle
+            const currentFileHandle = appState.getCurrentFileHandle();
+            if (currentFileHandle && currentFileHandle.name === oldFileName) {
+                appState.setCurrentFileHandle({ name: newFileName });
+                ui.updateStatus(`Editing: ${newFileName}`);
+            }
+            
+            ui.showToast(`Renamed to: ${newFileName}`);
+            
+        } catch (err) {
+            console.error('Error renaming file:', err);
+            ui.showToast('Error renaming file', CONFIG.MESSAGE_TYPES.ERROR);
+        }
+    }
+    
+    // Delete file from IndexedDB
+    async deleteFile(fileName, li) {
+        if (!confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            await indexedDBService.deleteFile(fileName);
+            
+            // Remove from UI
+            li.remove();
+            
+            // If this was the currently open file, clear the editor
+            const currentFileHandle = appState.getCurrentFileHandle();
+            if (currentFileHandle && currentFileHandle.name === fileName) {
+                const editor = appState.getEditor();
+                editor.setMarkdown('');
+                appState.clearFileState();
+                ui.updateStatus('File deleted');
+                this.updateSaveButtonState(true, false);
+            }
+            
+            ui.showToast(`Deleted: ${fileName}`);
+            
+            // Check if file list is empty
+            if (this.fileList.children.length === 0) {
+                this.fileList.innerHTML = '<li class="text-gray-400 text-sm p-2">No saved files found.</li>';
+            }
+            
+        } catch (err) {
+            console.error('Error deleting file:', err);
+            ui.showToast('Error deleting file', CONFIG.MESSAGE_TYPES.ERROR);
+        }
+    }
+    
     // Initialize event listeners
     initializeEventListeners() {
         // Event listeners are now handled by the editor toolbar commands

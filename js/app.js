@@ -39,6 +39,9 @@ export class App {
         // Initialize IndexedDB first
         await indexedDBService.initialize();
         
+        // Small delay to ensure IndexedDB is fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Initialize the editor first
         await editor.initialize();
         

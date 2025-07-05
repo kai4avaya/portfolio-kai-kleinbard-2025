@@ -96,6 +96,43 @@ export class Editor {
             // Debounce the updateOutline function call for performance
             ui.debouncedUpdateOutline();
         });
+
+        // Make links clickable in WYSIWYG mode
+        this.setupLinkClickHandler();
+    }
+
+    // Setup link click handler for WYSIWYG mode
+    setupLinkClickHandler() {
+        const editorElement = document.querySelector('#editor');
+        if (!editorElement) return;
+
+        // Use event delegation to handle link clicks
+        editorElement.addEventListener('click', (event) => {
+            const target = event.target;
+            
+            // Check if the clicked element is a link
+            if (target.tagName === 'A' && target.href) {
+                // Prevent default behavior (which would just select the link)
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Open link in new tab
+                window.open(target.href, '_blank', 'noopener,noreferrer');
+            }
+        });
+
+        // Also handle Ctrl+Click for opening links in new tab
+        editorElement.addEventListener('mousedown', (event) => {
+            const target = event.target;
+            
+            if (target.tagName === 'A' && target.href && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Open link in new tab
+                window.open(target.href, '_blank', 'noopener,noreferrer');
+            }
+        });
     }
 
     // Get the editor instance
