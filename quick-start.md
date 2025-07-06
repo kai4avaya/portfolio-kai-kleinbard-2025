@@ -49,7 +49,6 @@ Welcome to your **AI-First Textbook Editor**! This is a local-first, privacy-foc
 #### Code Blocks
 ```markdown
 ```javascript
-console.log("Hello World!");
 ```
 ```
 

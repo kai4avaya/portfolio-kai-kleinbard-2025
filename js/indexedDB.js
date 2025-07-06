@@ -19,25 +19,21 @@ export class IndexedDBService {
 
             request.onsuccess = () => {
                 this.db = request.result;
-                console.log('IndexedDB initialized successfully');
                 resolve(this.db);
             };
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
-                console.log('IndexedDB upgrade needed, version:', event.oldVersion, '->', event.newVersion);
                 
                 // Create object store if it doesn't exist
                 if (!db.objectStoreNames.contains(this.storeName)) {
                     const store = db.createObjectStore(this.storeName, { keyPath: 'fileName' });
                     store.createIndex('fileName', 'fileName', { unique: true });
-                    console.log('Created IndexedDB store:', this.storeName);
                 }
                 
                 // Create chats store
                 if (!db.objectStoreNames.contains('chats')) {
                     const chatStore = db.createObjectStore('chats', { keyPath: 'id' });
-                    console.log('Created IndexedDB chats store');
                 }
             };
         });
@@ -64,7 +60,6 @@ export class IndexedDBService {
             const request = store.put(fileData);
 
             request.onsuccess = () => {
-                console.log(`Saved file to IndexedDB: ${fileName}`);
                 resolve(fileData);
             };
 
@@ -88,7 +83,6 @@ export class IndexedDBService {
 
             request.onsuccess = () => {
                 if (request.result) {
-                    console.log(`Retrieved file from IndexedDB: ${fileName}`);
                     resolve(request.result);
                 } else {
                     resolve(null);
@@ -115,7 +109,6 @@ export class IndexedDBService {
 
             request.onsuccess = () => {
                 const files = request.result.filter(file => file.directoryName === directoryName);
-                console.log(`Retrieved ${files.length} files for directory: ${directoryName}`);
                 resolve(files);
             };
 
@@ -138,7 +131,6 @@ export class IndexedDBService {
             const request = store.delete(fileName);
 
             request.onsuccess = () => {
-                console.log(`Deleted file from IndexedDB: ${fileName}`);
                 resolve();
             };
 
@@ -166,7 +158,6 @@ export class IndexedDBService {
                 
                 Promise.all(deletePromises)
                     .then(() => {
-                        console.log(`Cleared ${files.length} files for directory: ${directoryName}`);
                         resolve(files.length);
                     })
                     .catch(reject);
@@ -174,6 +165,28 @@ export class IndexedDBService {
 
             request.onerror = () => {
                 console.error('Error clearing directory from IndexedDB:', request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    // Clear all files from IndexedDB
+    async clearAllFiles() {
+        if (!this.db) {
+            await this.initialize();
+        }
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.clear();
+
+            request.onsuccess = () => {
+                resolve();
+            };
+
+            request.onerror = () => {
+                console.error('Error clearing all files from IndexedDB:', request.error);
                 reject(request.error);
             };
         });
@@ -191,7 +204,6 @@ export class IndexedDBService {
             const request = store.getAll();
 
             request.onsuccess = () => {
-                console.log(`Retrieved ${request.result.length} total files from IndexedDB`);
                 resolve(request.result);
             };
 
@@ -211,7 +223,6 @@ export class IndexedDBService {
 
             // Ensure the database is ready
             if (!this.db.objectStoreNames.contains(this.storeName)) {
-                console.log('Object store not found, treating as first time user');
                 return true;
             }
 
@@ -222,7 +233,6 @@ export class IndexedDBService {
 
                 request.onsuccess = () => {
                     const isFirstTime = request.result.length === 0;
-                    console.log(`First time user check: ${isFirstTime}`);
                     resolve(isFirstTime);
                 };
 
@@ -248,7 +258,6 @@ export class IndexedDBService {
 
             // Ensure the database is ready
             if (!this.db.objectStoreNames.contains(this.storeName)) {
-                console.log('Object store not found, no last edited file');
                 return null;
             }
 
@@ -268,7 +277,6 @@ export class IndexedDBService {
                         new Date(b.lastModified) - new Date(a.lastModified)
                     );
 
-                    console.log(`Last edited file: ${sortedFiles[0].fileName}`);
                     resolve(sortedFiles[0]);
                 };
 

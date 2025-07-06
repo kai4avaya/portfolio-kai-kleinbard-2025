@@ -69,7 +69,6 @@ export class OutlineTree {
     // Update the outline tree with new markdown content
     updateOutline() {
         const editor = appState.getEditor();
-        console.log('[outlineTree] updateOutline called', { editor, tree: this.tree });
         if (!editor || !this.tree) {
             this.showMessage('Editor not ready.');
             return;
@@ -77,7 +76,6 @@ export class OutlineTree {
         
         const markdown = editor.getMarkdown();
         const treeData = this.parseMarkdownToTree(markdown);
-        console.log('[outlineTree] Parsed treeData:', treeData);
         
         if (treeData.length === 0) {
             this.showMessage(markdown.trim() === '' ? 
@@ -87,8 +85,6 @@ export class OutlineTree {
             return;
         }
         
-        // Debug: log the final treeData
-        console.log('Final treeData for FancyTree:', JSON.stringify(treeData, null, 2));
         // Reload the tree with new data
         this.tree.fancytree('getTree').reload(treeData);
         // Force all nodes with children to be expanded

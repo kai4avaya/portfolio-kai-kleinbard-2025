@@ -7,6 +7,7 @@ import { indexedDBService } from './indexedDB.js';
 export class FileSystem {
     constructor() {
         this.fileList = document.getElementById('file-list');
+        this.isLoadingFile = false; // Flag to prevent auto-save during file loading
     }
 
     // Open folder using File System Access API
@@ -115,6 +116,9 @@ export class FileSystem {
     // Open a specific file
     async openFile(fileName, fileElement) {
         try {
+            // Set a flag to prevent auto-save during file loading
+            this.isLoadingFile = true;
+            
             // First try to get the file from IndexedDB
             const savedFile = await indexedDBService.getFile(fileName);
             let content;
@@ -122,7 +126,6 @@ export class FileSystem {
             if (savedFile) {
                 // Use saved content from IndexedDB
                 content = savedFile.content;
-                console.log(`Loaded file from IndexedDB: ${fileName}`);
             } else {
                 // Try to load special files from kaiProfile.js
                 if (fileName === CONFIG.EDITOR.QUICK_START_FILE || fileName === CONFIG.EDITOR.KAI_PROFILE_FILE) {
@@ -137,6 +140,7 @@ export class FileSystem {
                             await indexedDBService.saveFile(fileName, content, 'welcome');
                         }
                     } catch (error) {
+                        console.error(`Error loading special file: ${error}`);
                         ui.showToast(`Could not load ${fileName}`, CONFIG.MESSAGE_TYPES.ERROR);
                         return;
                     }
@@ -160,6 +164,7 @@ export class FileSystem {
             
             const editor = appState.getEditor();
             editor.setMarkdown(content);
+            
             ui.updateStatus(`Editing: ${fileName}`);
             
             // Update active file element
@@ -175,11 +180,17 @@ export class FileSystem {
             // Update outline for the new file
             ui.updateOutline();
             
+            // Clear the loading flag after a short delay to allow auto-save to work normally
+            setTimeout(() => {
+                this.isLoadingFile = false;
+            }, 1000);
+            
         } catch (err) {
             console.error('Error opening file:', err);
             ui.showToast(`Could not open file: ${fileName}`, CONFIG.MESSAGE_TYPES.ERROR);
             appState.clearFileState();
             this.updateSaveButtonState(true, false);
+            this.isLoadingFile = false;
         }
     }
 
@@ -217,39 +228,50 @@ export class FileSystem {
     updateSaveButtonState(disabled, hasChanges = false) {
         const editor = appState.getEditor();
         if (!editor) return;
-        // Find the save button in the toolbar
+        // Find the download button in the toolbar (now in dropdown container)
         const elements = editor.getEditorElements();
         if (!elements || !elements.toolbar) return;
         const toolbar = elements.toolbar;
-        const saveButton = toolbar.querySelector('.tui-toolbar-icons.save-file');
-        if (!saveButton) return;
+        const downloadButton = toolbar.querySelector('.download-dropdown-container .tui-toolbar-icons.download-file');
+        if (!downloadButton) return;
         if (disabled) {
-            saveButton.style.opacity = '0.3';
-            saveButton.style.cursor = 'not-allowed';
+            downloadButton.style.opacity = '0.3';
+            downloadButton.style.cursor = 'not-allowed';
         } else {
-            saveButton.style.opacity = '0.85';
-            saveButton.style.cursor = 'pointer';
+            downloadButton.style.opacity = '0.85';
+            downloadButton.style.cursor = 'pointer';
         }
         if (hasChanges) {
-            saveButton.classList.add('has-changes');
+            downloadButton.classList.add('has-changes');
         } else {
-            saveButton.classList.remove('has-changes');
+            downloadButton.classList.remove('has-changes');
         }
     }
 
     // Mark file as changed (called from editor change event)
     markFileAsChanged() {
+        
         if (appState.hasCurrentFile()) {
             this.updateSaveButtonState(false, true);
+            
             // Also save current content to IndexedDB
             this.saveCurrentContentToIndexedDB();
+        } else {
         }
+        
     }
 
     // Save current editor content to IndexedDB
     async saveCurrentContentToIndexedDB() {
         const currentFileHandle = appState.getCurrentFileHandle();
-        if (!currentFileHandle) return;
+        if (!currentFileHandle) {
+            return;
+        }
+        
+        // Don't auto-save if we're currently loading a file
+        if (this.isLoadingFile) {
+            return;
+        }
         
         try {
             const editor = appState.getEditor();
@@ -257,8 +279,16 @@ export class FileSystem {
             const fileName = currentFileHandle.name;
             const directoryName = appState.getCurrentDirectoryName();
             
+            // Check if content has actually changed by comparing with what's already saved
+            const existingFile = await indexedDBService.getFile(fileName);
+            if (existingFile) {
+                if (existingFile.content === content) {
+                    return;
+                }
+            } else {
+            }
+            
             await indexedDBService.saveFile(fileName, content, directoryName);
-            console.log(`Auto-saved to IndexedDB: ${fileName}`);
         } catch (err) {
             console.error('Error auto-saving to IndexedDB:', err);
         }
@@ -268,7 +298,6 @@ export class FileSystem {
     async loadSavedFiles(directoryName) {
         try {
             const savedFiles = await indexedDBService.getFilesByDirectory(directoryName);
-            console.log(`Loaded ${savedFiles.length} saved files for directory: ${directoryName}`);
             return savedFiles;
         } catch (err) {
             console.error('Error loading saved files from IndexedDB:', err);
@@ -320,7 +349,6 @@ export class FileSystem {
                 return;
             }
             
-            console.log(`Loaded ${totalFiles} files from IndexedDB`);
         } catch (err) {
             console.error('Error loading unsaved files:', err);
             this.fileList.innerHTML = '<li class="text-gray-400 text-sm p-2">Error loading saved files.</li>';
@@ -388,16 +416,13 @@ export class FileSystem {
     // Handle first-time user experience
     async handleFirstTimeUser() {
         try {
-            console.log('Starting first-time user experience...');
             
             // Import both the Kai profile and quick start guide markdown
             const { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
-            console.log('Kai profile and quick start guide markdown imported successfully');
             
             // Save both documents to IndexedDB
             await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
             await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
-            console.log('Both documents saved to IndexedDB');
             
             // Set the current directory name for the welcome files
             appState.setCurrentDirectoryName('welcome');
@@ -405,7 +430,6 @@ export class FileSystem {
             // Load the Kai profile into the editor
             const editor = appState.getEditor();
             editor.setMarkdown(KAI_PROFILE_MARKDOWN);
-            console.log('Kai profile loaded into editor');
             
             // Update UI
             ui.updateStatus(`Welcome! Editing: ${CONFIG.EDITOR.KAI_PROFILE_FILE}`);
@@ -418,11 +442,34 @@ export class FileSystem {
             appState.setCurrentFileHandle({ name: CONFIG.EDITOR.KAI_PROFILE_FILE });
             this.updateSaveButtonState(false, false);
             
-            console.log('First-time user experience completed');
             
         } catch (error) {
             console.error('Error handling first-time user:', error);
             ui.showToast('Error setting up welcome file', CONFIG.MESSAGE_TYPES.ERROR);
+        }
+    }
+
+    // Reinitialize bundled documents with correct content
+    async reinitializeBundledDocuments() {
+        try {
+            
+            // Clear existing bundled documents
+            await indexedDBService.deleteFile(CONFIG.EDITOR.KAI_PROFILE_FILE);
+            await indexedDBService.deleteFile(CONFIG.EDITOR.QUICK_START_FILE);
+            
+            // Import both the Kai profile and quick start guide markdown
+            const { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
+            
+            // Save both documents to IndexedDB with correct content
+            await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
+            await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
+            
+            // Update file list
+            await this.populateFileList();
+            
+        } catch (error) {
+            console.error('Error reinitializing bundled documents:', error);
+            ui.showToast('Error reinitializing bundled documents', CONFIG.MESSAGE_TYPES.ERROR);
         }
     }
 
@@ -467,7 +514,6 @@ export class FileSystem {
                         
                         await this.populateFileList();
                         this.updateSaveButtonState(false, false);
-                        console.log('Bundled documents loaded by editor or URL parameter');
                         
                         // Ensure both documents are available
                         try {
@@ -475,12 +521,10 @@ export class FileSystem {
                             
                             if (!kaiProfileFile) {
                                 await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
-                                console.log('Kai profile saved to IndexedDB');
                             }
                             
                             if (!quickStartFile) {
                                 await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
-                                console.log('Quick start guide saved to IndexedDB');
                             }
                         } catch (error) {
                             console.error('Error ensuring bundled documents are available:', error);
@@ -507,7 +551,6 @@ export class FileSystem {
                         appState.setCurrentFileHandle({ name: lastFile.fileName });
                         this.updateSaveButtonState(false, false);
                         
-                        console.log(`Loaded last edited file: ${lastFile.fileName}`);
                     } else {
                         // No files found, show empty editor
                         ui.updateStatus('No files found. Create a new file or open a folder.');
@@ -699,6 +742,18 @@ export class FileSystem {
     initializeEventListeners() {
         // Event listeners are now handled by the editor toolbar commands
         // No need for separate button event listeners
+        
+        // Add global function for debugging and fixing bundled documents
+        window.fixBundledDocuments = async () => {
+            await this.reinitializeBundledDocuments();
+        };
+        
+        // Add global function for completely clearing IndexedDB and reinitializing
+        window.clearAllAndReinitialize = async () => {
+            await indexedDBService.clearAllFiles();
+            await this.reinitializeBundledDocuments();
+        };
+        
     }
 }
 

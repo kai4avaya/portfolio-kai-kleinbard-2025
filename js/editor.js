@@ -3,6 +3,8 @@ import { appState } from './state.js';
 import { ui } from './ui.js';
 import { fileSystem } from './fileSystem.js';
 import { indexedDBService } from './indexedDB.js';
+import { exportToPDF } from './pdfExport.js';
+import { exportToHTML } from './htmlExport.js';
 
 // Make appState globally accessible for AI chat
 window.appState = appState;
@@ -29,7 +31,6 @@ export class Editor {
                 // For testing: uncomment the next line to force first-time user experience
                 // localStorage.removeItem('aiTextbookEditor_hasVisited');
                 
-                console.log('Editor initialization:', { isFirstTimeUser, hasVisitedBefore });
                 
                 // Check for URL query parameters
                 const urlParams = new URLSearchParams(window.location.search);
@@ -42,7 +43,6 @@ export class Editor {
                 try {
                                     if (requestedFile) {
                     // User specified a file via URL parameter
-                    console.log('Loading requested file:', requestedFile);
                     initialEditType = 'wysiwyg'; // Always use WYSIWYG for specific files
                     initialContent = await this.loadFileContent(requestedFile);
                     
@@ -54,21 +54,18 @@ export class Editor {
                         const kaiProfileFile = await indexedDBService.getFile(CONFIG.EDITOR.KAI_PROFILE_FILE);
                         if (!kaiProfileFile) {
                             await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
-                            console.log('Kai profile saved to IndexedDB for URL parameter access');
                         }
                         
                         // Save quick start guide if it doesn't exist
                         const quickStartFile = await indexedDBService.getFile(CONFIG.EDITOR.QUICK_START_FILE);
                         if (!quickStartFile) {
                             await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
-                            console.log('Quick start guide saved to IndexedDB for URL parameter access');
                         }
                     } catch (error) {
                         console.error('Error ensuring bundled documents are available:', error);
                     }
                 } else if (isFirstTimeUser) {
                     // First-time user - show quick start guide
-                    console.log('Loading quick start guide for first-time user');
                     initialEditType = 'wysiwyg';
                     initialContent = await this.loadQuickStartGuide();
                     localStorage.setItem('aiTextbookEditor_hasVisited', 'true');
@@ -76,18 +73,15 @@ export class Editor {
                     // Save both documents to IndexedDB for file system
                     try {
                         await indexedDBService.saveFile('quick-start.md', initialContent, 'quick-start');
-                        console.log('Quick start guide saved to IndexedDB for file system');
                         
                         // Also save Kai profile
                         const { KAI_PROFILE_MARKDOWN } = await import('./kaiProfile.js');
                         await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
-                        console.log('Kai profile saved to IndexedDB for file system');
                     } catch (error) {
                         console.error('Error saving documents to IndexedDB:', error);
                     }
                 }
                     
-                    console.log('Initial content loaded, length:', initialContent.length);
                 } catch (error) {
                     console.error('Error loading initial content:', error);
                 }
@@ -110,7 +104,7 @@ export class Editor {
                         }, {
                             el: this.createButton('new-file', 'New File', () => fileSystem.createNewFileDialog())
                         }, {
-                            el: this.createButton('download-file', 'Save File', () => fileSystem.saveFile())
+                            el: this.createDownloadDropdown()
                         }]
                     ]
                 });
@@ -144,6 +138,129 @@ export class Editor {
         return button;
     }
 
+    createDownloadDropdown() {
+        const container = document.createElement('div');
+        container.className = 'download-dropdown-container relative';
+        
+        // Create the main download button
+        const button = document.createElement('button');
+        button.className = 'tui-toolbar-icons download-file custom-small';
+        button.title = 'Download File';
+        button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7,10 12,15 17,10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        `;
+        
+        // Create dropdown menu
+        const dropdown = document.createElement('div');
+        dropdown.className = 'download-dropdown bg-white border border-gray-300 rounded-md shadow-lg hidden';
+        dropdown.innerHTML = `
+            <div class="download-options-list py-1">
+                <button class="download-option w-full text-left px-4 py-2 text-sm hover:bg-gray-100" data-format="md">
+                    <i class="fas fa-file-code mr-2"></i>Download as .md
+                </button>
+                <button class="download-option w-full text-left px-4 py-2 text-sm hover:bg-gray-100" data-format="txt">
+                    <i class="fas fa-file-alt mr-2"></i>Download as .txt
+                </button>
+                <button class="download-option w-full text-left px-4 py-2 text-sm hover:bg-gray-100" data-format="pdf">
+                    <i class="fas fa-file-pdf mr-2"></i>Download as .pdf
+                </button>
+                <button class="download-option w-full text-left px-4 py-2 text-sm hover:bg-gray-100" data-format="html">
+                    <i class="fas fa-file-code mr-2"></i>Download as .html
+                </button>
+            </div>
+        `;
+        
+        // Add click handler to toggle dropdown
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('hidden');
+        });
+        
+        // Add click handlers for download options
+        dropdown.addEventListener('click', async (e) => {
+            const option = e.target.closest('.download-option');
+            if (option && !option.disabled) {
+                const format = option.dataset.format;
+                if (format === 'pdf') {
+                    // PDF export
+                    if (window.jsPDF) {
+                        const editor = appState.getEditor();
+                        const content = editor ? editor.getMarkdown() : '';
+                        const currentFileHandle = appState.getCurrentFileHandle();
+                        let fileName = 'document';
+                        if (currentFileHandle && currentFileHandle.name) {
+                            fileName = currentFileHandle.name.replace(/\.[^/.]+$/, '');
+                        }
+                        await exportToPDF(content, fileName);
+                        ui.showToast(`Downloaded: ${fileName}.pdf`);
+                    } else {
+                        ui.showToast('PDF export requires jsPDF. Please check your internet connection.', CONFIG.MESSAGE_TYPES.ERROR);
+                    }
+                } else if (format === 'html') {
+                    // HTML export
+                    const editor = appState.getEditor();
+                    const content = editor ? editor.getMarkdown() : '';
+                    const currentFileHandle = appState.getCurrentFileHandle();
+                    let fileName = 'document';
+                    if (currentFileHandle && currentFileHandle.name) {
+                        fileName = currentFileHandle.name.replace(/\.[^/.]+$/, '');
+                    }
+                    await exportToHTML(content, fileName);
+                    ui.showToast(`Downloaded: ${fileName}.html`);
+                } else {
+                    this.downloadFile(format);
+                }
+                dropdown.classList.add('hidden');
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+        
+        container.appendChild(button);
+        container.appendChild(dropdown);
+        return container;
+    }
+
+    downloadFile(format) {
+        const editor = appState.getEditor();
+        if (!editor) return;
+        
+        const content = editor.getMarkdown();
+        const currentFileHandle = appState.getCurrentFileHandle();
+        let fileName = 'document';
+        
+        // Use current file name if available, otherwise use default
+        if (currentFileHandle && currentFileHandle.name) {
+            fileName = currentFileHandle.name.replace(/\.[^/.]+$/, ''); // Remove extension
+        }
+        
+        // Add appropriate extension
+        fileName += format === 'md' ? '.md' : '.txt';
+        
+        // Create blob and download
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Show success message
+        ui.showToast(`Downloaded: ${fileName}`);
+    }
+
     addCustomToolbarItems() {
         setTimeout(() => fileSystem.updateSaveButtonState(true, false), 100);
     }
@@ -152,6 +269,7 @@ export class Editor {
     setupEventListeners() {
         // Debounced outline update on editor change
         this.editor.on('change', () => {
+            
             // Mark file as changed for save button and auto-save to IndexedDB
             fileSystem.markFileAsChanged();
             
@@ -242,7 +360,6 @@ export class Editor {
             
             // Check if it's one of our bundled documents
             if (fileName === CONFIG.EDITOR.KAI_PROFILE_FILE || fileName === CONFIG.EDITOR.QUICK_START_FILE) {
-                console.log(`Loading bundled document: ${fileName}`);
                 const { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
                 
                 if (fileName === CONFIG.EDITOR.KAI_PROFILE_FILE) {
@@ -276,13 +393,10 @@ export class Editor {
     // Load quick start guide content
     async loadQuickStartGuide() {
         try {
-            console.log('Loading quick start guide from kaiProfile.js');
             // Import the quick start guide from kaiProfile.js
             const { QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
-            console.log('Quick start guide content loaded, length:', QUICK_START_MARKDOWN.length);
             // Save to IndexedDB for future use
             await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
-            console.log('Quick start guide saved to IndexedDB');
             return QUICK_START_MARKDOWN;
         } catch (error) {
             console.error('Error loading quick start guide:', error);
@@ -293,9 +407,7 @@ export class Editor {
 
     // Test method to manually load quick start guide
     async testQuickStartGuide() {
-        console.log('Testing quick start guide loading...');
         const content = await this.loadQuickStartGuide();
-        console.log('Quick start guide test result:', content.substring(0, 100) + '...');
         return content;
     }
 }

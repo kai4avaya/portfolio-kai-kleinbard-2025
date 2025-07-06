@@ -30,6 +30,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-100 text-gray-800">
+    <!-- Loader Overlay -->
+    <div id="app-loader" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+      <div class="loader-spinner border-4 border-blue-200 border-t-blue-600 rounded-full w-12 h-12 animate-spin"></div>
+    </div>
 
     <!-- Icon Toolbar -->
     <div class="bg-gray-100 border-r border-gray-200 flex flex-col items-center p-2 space-y-4">
@@ -161,7 +165,9 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery.fancytree@2.38/dist/jquery.fancytree-all-deps.min.js"></script>
     <!-- Toast UI Editor JS -->
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
-    
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>
+
     <!-- Main Application Script -->
     <script type="module" src="js/app.js"></script>
     
@@ -171,7 +177,6 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
-                        console.log('SW registered: ', registration);
                     })
                     .catch(registrationError => {
                         console.log('SW registration failed: ', registrationError);

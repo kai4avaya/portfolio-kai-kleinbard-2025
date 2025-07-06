@@ -28,7 +28,9 @@ export class App {
             
             this.initialized = true;
             console.log('AI Textbook Editor initialized successfully');
-            
+            // Hide loader overlay
+            const loader = document.getElementById('app-loader');
+            if (loader) loader.style.display = 'none';
         } catch (error) {
             console.error('Failed to initialize application:', error);
         }
