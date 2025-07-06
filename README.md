@@ -115,6 +115,22 @@ Main application coordination:
 4. **Chat with AI** in the AI panel for writing assistance
 5. **Save your changes** using the save button
 
+### Direct File Access via URL
+
+You can open specific files directly by adding a query parameter to the URL:
+
+- **Local files**: `?file=my-document.md`
+- **Bundled documents**: `?file=quick-start.md` or `?file=about-kai-kleinbard.md`
+- **External files**: `?file=https://example.com/document.md`
+
+#### Examples:
+- `https://yourapp.com/?file=my-notes.md` - Opens a local markdown file
+- `https://yourapp.com/?file=quick-start.md` - Opens the quick start guide
+- `https://yourapp.com/?file=about-kai-kleinbard.md` - Opens the Kai profile
+- `https://yourapp.com/?file=https://raw.githubusercontent.com/user/repo/main/README.md` - Opens an external markdown file
+
+**Note**: When accessing files via URL, the editor automatically loads in WYSIWYG mode for the best viewing experience.
+
 ## Browser Compatibility
 
 This application uses modern web APIs:
