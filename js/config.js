@@ -5,6 +5,7 @@ export const CONFIG = {
         INITIAL_VALUE: '# Welcome to the AI Textbook Editor!\n\nStart typing here, or open a folder to begin editing your files.',
         OUTLINE_UPDATE_DELAY: 300, // milliseconds
         QUICK_START_FILE: 'quick-start.md',
+        KAI_PROFILE_FILE: 'about-kai-kleinbard.md',
     },
     
     // File system settings

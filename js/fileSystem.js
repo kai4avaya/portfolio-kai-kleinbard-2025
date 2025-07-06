@@ -74,6 +74,32 @@ export class FileSystem {
             }
         }
         
+        // Also show quick start guide if it exists (regardless of current directory)
+        try {
+            const quickStartFile = await indexedDBService.getFile('quick-start.md');
+            if (quickStartFile && !fileSet.has('quick-start.md')) {
+                foundFiles = true;
+                fileSet.add('quick-start.md');
+                const li = this.createFileListItem('quick-start.md', 'indexeddb', true);
+                this.fileList.appendChild(li);
+            }
+        } catch (err) {
+            console.error('Error loading quick start guide:', err);
+        }
+        
+                    // Also show Kai profile if it exists (regardless of current directory)
+            try {
+                const kaiProfileFile = await indexedDBService.getFile(CONFIG.EDITOR.KAI_PROFILE_FILE);
+                if (kaiProfileFile && !fileSet.has(CONFIG.EDITOR.KAI_PROFILE_FILE)) {
+                    foundFiles = true;
+                    fileSet.add(CONFIG.EDITOR.KAI_PROFILE_FILE);
+                    const li = this.createFileListItem(CONFIG.EDITOR.KAI_PROFILE_FILE, 'indexeddb', true);
+                    this.fileList.appendChild(li);
+                }
+            } catch (err) {
+                console.error('Error loading Kai profile:', err);
+            }
+        
         if (!foundFiles) {
             this.fileList.innerHTML = '<li class="text-gray-400 text-sm p-2">No Markdown files found.</li>';
         }
@@ -98,19 +124,20 @@ export class FileSystem {
                 content = savedFile.content;
                 console.log(`Loaded file from IndexedDB: ${fileName}`);
             } else {
-                // Try to fetch from server for special files like quick-start.md
-                if (fileName === CONFIG.EDITOR.QUICK_START_FILE) {
+                // Try to load special files from kaiProfile.js
+                if (fileName === CONFIG.EDITOR.QUICK_START_FILE || fileName === CONFIG.EDITOR.KAI_PROFILE_FILE) {
                     try {
-                        const response = await fetch(CONFIG.EDITOR.QUICK_START_FILE);
-                        if (response.ok) {
-                            content = await response.text();
+                        const { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
+                        
+                        if (fileName === CONFIG.EDITOR.QUICK_START_FILE) {
+                            content = QUICK_START_MARKDOWN;
                             await indexedDBService.saveFile(fileName, content, 'quick-start');
-                        } else {
-                            ui.showToast(`Could not load quick-start guide`, CONFIG.MESSAGE_TYPES.ERROR);
-                            return;
+                        } else if (fileName === CONFIG.EDITOR.KAI_PROFILE_FILE) {
+                            content = KAI_PROFILE_MARKDOWN;
+                            await indexedDBService.saveFile(fileName, content, 'welcome');
                         }
                     } catch (error) {
-                        ui.showToast(`Could not load quick-start guide`, CONFIG.MESSAGE_TYPES.ERROR);
+                        ui.showToast(`Could not load ${fileName}`, CONFIG.MESSAGE_TYPES.ERROR);
                         return;
                     }
                 } else {
@@ -255,17 +282,45 @@ export class FileSystem {
             const savedFiles = await indexedDBService.getFilesByDirectory('unsaved_documents');
             this.fileList.innerHTML = '';
             
-            if (savedFiles.length === 0) {
+            let totalFiles = 0;
+            
+            // Add unsaved documents
+            for (const savedFile of savedFiles) {
+                const li = this.createFileListItem(savedFile.fileName, 'indexeddb', true);
+                this.fileList.appendChild(li);
+                totalFiles++;
+            }
+            
+            // Also show quick start guide if it exists
+            try {
+                const quickStartFile = await indexedDBService.getFile('quick-start.md');
+                if (quickStartFile) {
+                    const li = this.createFileListItem('quick-start.md', 'indexeddb', true);
+                    this.fileList.appendChild(li);
+                    totalFiles++;
+                }
+            } catch (err) {
+                console.error('Error loading quick start guide:', err);
+            }
+            
+            // Also show Kai profile if it exists
+            try {
+                const kaiProfileFile = await indexedDBService.getFile(CONFIG.EDITOR.KAI_PROFILE_FILE);
+                if (kaiProfileFile) {
+                    const li = this.createFileListItem(CONFIG.EDITOR.KAI_PROFILE_FILE, 'indexeddb', true);
+                    this.fileList.appendChild(li);
+                    totalFiles++;
+                }
+            } catch (err) {
+                console.error('Error loading Kai profile:', err);
+            }
+            
+            if (totalFiles === 0) {
                 this.fileList.innerHTML = '<li class="text-gray-400 text-sm p-2">No saved files found. Create a new file to get started.</li>';
                 return;
             }
             
-            for (const savedFile of savedFiles) {
-                const li = this.createFileListItem(savedFile.fileName, 'indexeddb', true);
-                this.fileList.appendChild(li);
-            }
-            
-            console.log(`Loaded ${savedFiles.length} unsaved files from IndexedDB`);
+            console.log(`Loaded ${totalFiles} files from IndexedDB`);
         } catch (err) {
             console.error('Error loading unsaved files:', err);
             this.fileList.innerHTML = '<li class="text-gray-400 text-sm p-2">Error loading saved files.</li>';
@@ -335,34 +390,32 @@ export class FileSystem {
         try {
             console.log('Starting first-time user experience...');
             
-            // Import the Kai profile markdown
-            const { KAI_PROFILE_MARKDOWN } = await import('./kaiProfile.js');
-            console.log('Kai profile markdown imported successfully');
+            // Import both the Kai profile and quick start guide markdown
+            const { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
+            console.log('Kai profile and quick start guide markdown imported successfully');
             
-            // Save the Kai profile as the initial file
-            const fileName = 'about-kai-kleinbard.md';
-            const directoryName = 'welcome';
-            
-            await indexedDBService.saveFile(fileName, KAI_PROFILE_MARKDOWN, directoryName);
-            console.log('Kai profile saved to IndexedDB');
+            // Save both documents to IndexedDB
+            await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
+            await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
+            console.log('Both documents saved to IndexedDB');
             
             // Set the current directory name for the welcome files
-            appState.setCurrentDirectoryName(directoryName);
+            appState.setCurrentDirectoryName('welcome');
             
-            // Load the file into the editor
+            // Load the Kai profile into the editor
             const editor = appState.getEditor();
             editor.setMarkdown(KAI_PROFILE_MARKDOWN);
             console.log('Kai profile loaded into editor');
             
             // Update UI
-            ui.updateStatus(`Welcome! Editing: ${fileName}`);
+            ui.updateStatus(`Welcome! Editing: ${CONFIG.EDITOR.KAI_PROFILE_FILE}`);
             ui.showToast('Welcome to the AI Textbook Editor! Here\'s a bit about me, Kai Kleinbard.', CONFIG.MESSAGE_TYPES.SUCCESS);
             
-            // Update file list to show the new file
+            // Update file list to show both files
             await this.populateFileList();
             
             // Set up the file as the current file (virtual file handle)
-            appState.setCurrentFileHandle({ name: fileName });
+            appState.setCurrentFileHandle({ name: CONFIG.EDITOR.KAI_PROFILE_FILE });
             this.updateSaveButtonState(false, false);
             
             console.log('First-time user experience completed');
@@ -376,37 +429,70 @@ export class FileSystem {
     // Load the last edited file or handle first-time user
     async loadLastEditedFile() {
         try {
-            const isFirstTime = await indexedDBService.isFirstTimeUser();
+            // Check if editor has already handled first-time user experience
+            const hasVisitedBefore = localStorage.getItem('aiTextbookEditor_hasVisited');
+            const editorHandledFirstTime = !hasVisitedBefore;
             
-            if (isFirstTime) {
-                // Handle first-time user
+            // Only check IndexedDB if editor hasn't handled first-time user
+            let isFirstTime = false;
+            if (!editorHandledFirstTime) {
+                isFirstTime = await indexedDBService.isFirstTimeUser();
+            }
+            
+            if (isFirstTime && !editorHandledFirstTime) {
+                // Handle first-time user (only if editor hasn't already)
                 await this.handleFirstTimeUser();
             } else {
-                // Load the most recently edited file
-                const lastFile = await indexedDBService.getLastEditedFile();
-                
-                if (lastFile) {
-                    // Set the directory name
-                    appState.setCurrentDirectoryName(lastFile.directoryName);
-                    
-                    // Load the file into the editor
-                    const editor = appState.getEditor();
-                    editor.setMarkdown(lastFile.content);
-                    
-                    // Update UI
-                    ui.updateStatus(`Editing: ${lastFile.fileName}`);
-                    
-                    // Update file list
+                // Check if quick start guide was loaded by editor
+                const quickStartFile = await indexedDBService.getFile('quick-start.md');
+                if (quickStartFile && quickStartFile.directoryName === 'quick-start') {
+                    // Quick start guide was loaded by editor
+                    appState.setCurrentDirectoryName('quick-start');
+                    appState.setCurrentFileHandle({ name: 'quick-start.md' });
+                    ui.updateStatus('Editing: quick-start.md');
                     await this.populateFileList();
-                    
-                    // Set up the file as the current file
-                    appState.setCurrentFileHandle({ name: lastFile.fileName });
                     this.updateSaveButtonState(false, false);
+                    console.log('Quick start guide loaded by editor');
                     
-                    console.log(`Loaded last edited file: ${lastFile.fileName}`);
+                    // Also ensure Kai profile is available in IndexedDB
+                    try {
+                        const kaiProfileFile = await indexedDBService.getFile(CONFIG.EDITOR.KAI_PROFILE_FILE);
+                        if (!kaiProfileFile) {
+                            // Import and save Kai profile if it doesn't exist
+                            const { KAI_PROFILE_MARKDOWN } = await import('./kaiProfile.js');
+                            await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
+                            console.log('Kai profile saved to IndexedDB for first-time user');
+                        }
+                    } catch (error) {
+                        console.error('Error ensuring Kai profile is available:', error);
+                    }
                 } else {
-                    // No files found, show empty editor
-                    ui.updateStatus('No files found. Create a new file or open a folder.');
+                    // Load the most recently edited file
+                    const lastFile = await indexedDBService.getLastEditedFile();
+                    
+                    if (lastFile) {
+                        // Set the directory name
+                        appState.setCurrentDirectoryName(lastFile.directoryName);
+                        
+                        // Load the file into the editor
+                        const editor = appState.getEditor();
+                        editor.setMarkdown(lastFile.content);
+                        
+                        // Update UI
+                        ui.updateStatus(`Editing: ${lastFile.fileName}`);
+                        
+                        // Update file list
+                        await this.populateFileList();
+                        
+                        // Set up the file as the current file
+                        appState.setCurrentFileHandle({ name: lastFile.fileName });
+                        this.updateSaveButtonState(false, false);
+                        
+                        console.log(`Loaded last edited file: ${lastFile.fileName}`);
+                    } else {
+                        // No files found, show empty editor
+                        ui.updateStatus('No files found. Create a new file or open a folder.');
+                    }
                 }
             }
         } catch (error) {
@@ -428,7 +514,7 @@ export class FileSystem {
         
         // File name span
         const nameSpan = document.createElement('span');
-        nameSpan.textContent = isSaved ? `${fileName} (saved)` : fileName;
+        nameSpan.textContent = fileName;
         nameSpan.className = isSaved ? 'text-blue-600' : '';
         nameContainer.appendChild(nameSpan);
         
@@ -538,7 +624,7 @@ export class FileSystem {
             // Update UI
             li.dataset.fileName = newFileName;
             const nameSpan = li.querySelector('span');
-            nameSpan.textContent = `${newFileName} (saved)`;
+            nameSpan.textContent = newFileName;
             
             // If this is the currently open file, update the file handle
             const currentFileHandle = appState.getCurrentFileHandle();

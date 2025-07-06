@@ -15,7 +15,7 @@ export class Editor {
 
     // Initialize the Toast UI Editor
     async initialize() {
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
             // We wrap the editor initialization in requestAnimationFrame to ensure the DOM
             // is fully painted and stable. This can help prevent the benign 'ResizeObserver'
             // warning from the Toast UI library in some complex layouts.
@@ -26,6 +26,11 @@ export class Editor {
                 const hasVisitedBefore = localStorage.getItem('aiTextbookEditor_hasVisited');
                 const isFirstTimeUser = !hasVisitedBefore;
                 
+                // For testing: uncomment the next line to force first-time user experience
+                // localStorage.removeItem('aiTextbookEditor_hasVisited');
+                
+                console.log('Editor initialization:', { isFirstTimeUser, hasVisitedBefore });
+                
                 // Check for URL query parameters
                 const urlParams = new URLSearchParams(window.location.search);
                 const requestedFile = urlParams.get('file');
@@ -34,15 +39,36 @@ export class Editor {
                 let initialContent = CONFIG.EDITOR.INITIAL_VALUE;
                 let initialEditType = 'markdown'; // Default for returning users
                 
-                if (requestedFile) {
-                    // User specified a file via URL parameter
-                    initialEditType = 'wysiwyg'; // Always use WYSIWYG for specific files
-                    initialContent = await this.loadFileContent(requestedFile);
-                } else if (isFirstTimeUser) {
+                try {
+                    if (requestedFile) {
+                        // User specified a file via URL parameter
+                        console.log('Loading requested file:', requestedFile);
+                        initialEditType = 'wysiwyg'; // Always use WYSIWYG for specific files
+                        initialContent = await this.loadFileContent(requestedFile);
+                                    } else if (isFirstTimeUser) {
                     // First-time user - show quick start guide
+                    console.log('Loading quick start guide for first-time user');
                     initialEditType = 'wysiwyg';
                     initialContent = await this.loadQuickStartGuide();
                     localStorage.setItem('aiTextbookEditor_hasVisited', 'true');
+                    
+                    // Save both documents to IndexedDB for file system
+                    try {
+                        await indexedDBService.saveFile('quick-start.md', initialContent, 'quick-start');
+                        console.log('Quick start guide saved to IndexedDB for file system');
+                        
+                        // Also save Kai profile
+                        const { KAI_PROFILE_MARKDOWN } = await import('./kaiProfile.js');
+                        await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
+                        console.log('Kai profile saved to IndexedDB for file system');
+                    } catch (error) {
+                        console.error('Error saving documents to IndexedDB:', error);
+                    }
+                }
+                    
+                    console.log('Initial content loaded, length:', initialContent.length);
+                } catch (error) {
+                    console.error('Error loading initial content:', error);
                 }
                 
                 this.editor = new Editor({
@@ -71,6 +97,9 @@ export class Editor {
                 // Store editor in global state and window
                 appState.setEditor(this.editor);
                 window.editorInstance = this.editor;
+                
+                // Make test method globally accessible for debugging
+                window.testQuickStartGuide = () => this.testQuickStartGuide();
 
                 // Add custom toolbar items
                 this.addCustomToolbarItems();
@@ -190,7 +219,23 @@ export class Editor {
                 return savedFile.content;
             }
             
-            // If not in IndexedDB, try to fetch from server
+            // Check if it's one of our bundled documents
+            if (fileName === CONFIG.EDITOR.KAI_PROFILE_FILE || fileName === CONFIG.EDITOR.QUICK_START_FILE) {
+                console.log(`Loading bundled document: ${fileName}`);
+                const { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
+                
+                if (fileName === CONFIG.EDITOR.KAI_PROFILE_FILE) {
+                    const content = KAI_PROFILE_MARKDOWN;
+                    await indexedDBService.saveFile(fileName, content, 'welcome');
+                    return content;
+                } else if (fileName === CONFIG.EDITOR.QUICK_START_FILE) {
+                    const content = QUICK_START_MARKDOWN;
+                    await indexedDBService.saveFile(fileName, content, 'quick-start');
+                    return content;
+                }
+            }
+            
+            // If not a bundled document, try to fetch from server
             const response = await fetch(fileName);
             if (response.ok) {
                 const content = await response.text();
@@ -210,47 +255,27 @@ export class Editor {
     // Load quick start guide content
     async loadQuickStartGuide() {
         try {
-            // Try to fetch the quick-start.md file
-            const response = await fetch(CONFIG.EDITOR.QUICK_START_FILE);
-            if (response.ok) {
-                const content = await response.text();
-                // Save to IndexedDB for future use
-                await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, content, 'quick-start');
-                return content;
-            }
-            
-            // Fallback content if file not found
-            return `# Quick Start Guide - AI Textbook Editor
-
-Welcome to your **AI-First Textbook Editor**! This is a local-first, privacy-focused document editor that runs entirely in your browser.
-
-## 🚀 Getting Started
-
-### First Steps
-1. **Start Writing**: Just begin typing in the editor - your content is automatically saved locally
-2. **Switch Modes**: Use the tabs at the top to switch between Markdown and WYSIWYG editing
-3. **AI Assistant**: Click the chat icon in the sidebar to get AI help with your writing
-
-### Key Features
-
-#### 📁 File Management
-- **Open Folder**: Click the folder icon to open a directory of markdown files
-- **New File**: Create new documents with the + icon
-- **Save File**: Download your work as a markdown file
-- **Auto-Save**: Your work is automatically saved locally in your browser
-
-#### 🤖 AI Integration
-- **Smart Assistance**: Get help with writing, editing, and formatting
-- **Knowledge Base**: The AI can reference your other documents for context
-- **Perfect Markdown**: AI responses are formatted in clean markdown
-
----
-
-**Ready to start writing?** Just begin typing below or use the AI assistant to help you get started!`;
+            console.log('Loading quick start guide from kaiProfile.js');
+            // Import the quick start guide from kaiProfile.js
+            const { QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
+            console.log('Quick start guide content loaded, length:', QUICK_START_MARKDOWN.length);
+            // Save to IndexedDB for future use
+            await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
+            console.log('Quick start guide saved to IndexedDB');
+            return QUICK_START_MARKDOWN;
         } catch (error) {
             console.error('Error loading quick start guide:', error);
+            console.log('Returning fallback content due to error');
             return CONFIG.EDITOR.INITIAL_VALUE;
         }
+    }
+
+    // Test method to manually load quick start guide
+    async testQuickStartGuide() {
+        console.log('Testing quick start guide loading...');
+        const content = await this.loadQuickStartGuide();
+        console.log('Quick start guide test result:', content.substring(0, 100) + '...');
+        return content;
     }
 }
 

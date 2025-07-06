@@ -1,5 +1,5 @@
 // Kai Kleinbard Profile - Markdown Content
-const KAI_PROFILE_MARKDOWN = `# Kai Kleinbard
+const KAI_PROFILE_MARKDOWN = `# About Kai Kleinbard
 
 ## About This AI Editor
 
@@ -7,86 +7,188 @@ This profile was created using my **AI-First Textbook Editor** - a local-first, 
 
 ---
 
-## About Me
+## About Kai Kleinbard
 
-Hello, I'm **Kai Kleinbard** - software developer, AI specialist, and educator.
+![Kai Kleinbard](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/master/images/kai-kleinbard-edtech.png)
 
-I'm a computer and data scientist who loves to use deep learning and large language models to make things that are easy to use and friendly. I started **Somatikai**, a place where I explore how AI and body awareness work together. I also run **bodyLITERATE**, an organization that helps people who learn differently. And I created **The Institute for Playful Beings and PlayLab**, where I play with different ways of being and learning.
+With a background rooted in technology and education, Kai Kleinbard brings a unique blend of expertise to his work. His academic journey includes research on ML systems at the University of Pennsylvania, a focus on computer-human interaction and design at Harvard, and an analytics degree from Georgia Tech.
 
-I have a **Masters Degree from UPenn**, where I studied how to make digital tools more accessible for neuro-diverse learners. At Penn I assisted in research and teaching graduate algorithms and computational mathematics. **I love math!**
+Currently, Kai builds generative art systems and continues to explore the rich intersection of art, human movement, AI, and education. He is driven by a passion for creating more equitable and intuitive learning experiences, using technology to bridge the gap between the digital and physical worlds.
 
-When I'm not coding or designing algorithms, I work with families at conflict with schools, supporting neurodivergent learners to obtain the supports they need. I learned **Motivational Interviewing**, a kind of therapy, from William R Miller, who invented it. Besides all that, I'm still a dancer and a martial artist at heart.
+***
 
-## Projects and Current Research
+## AI & Machine Learning Systems
 
-I am curious about how we can **somatize the digital experience**, which involves bridging the gap between the physical and virtual worlds to create a more immersive and embodied interaction with technology. In this context, embodied means grounding the digital experience in bodily sensations and physical presence, allowing users to engage with technology in a more natural and intuitive way.
+Projects focused on the research, development, and application of advanced AI and machine learning systems.
 
-I hope to use artificial intelligence to create more accessible and equitable education experiences for neurodivergent students. My goal is to make AI a part of education that helps all students, especially those who learn differently, feel included and supported. I hope that by using AI in education, we can bring people together and create a kinder digital world where everyone can learn and grow.
+### Quarch ⌛
 
-Beyond this, I also believe we need to create systems that are accountable to privacy needs and fully transparent.
+*A compact archiving utility—mapping temporal data across blockchain timelines.*
+![Quarch](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/quarch.png)
+A collaboration with Harvard Edge Computing, Quarch is an international, community-driven dataset where multiple AIs compete to solve user-submitted questions. The platform is designed to train and benchmark ML systems, computer chips, and edge AI. [View Project](https://quarch.ai/)
 
-## Projects Portfolio
+### ML Systems Book 📚
 
-### Education Technology
+*A digital companion to machine learning systems—streamlining concepts and frameworks.*
+![ML Systems Book](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/mlsysbook.png)
+An open-source textbook from the Harvard Edge AI lab featuring "Socratiq AI," a local-first AI teaching assistant embedded in the book. This work explores efficient in-browser embedding algorithms. [Visit Site](https://mlsysbook.ai/) \| [Read Paper](https://arxiv.org/abs/2502.00341) \| [TensorFlow Blog](https://blog.tensorflow.org/2024/11/mlsysbookai-principles-and-practices-of-machine-learning-systems-engineering.html)
 
-- **[bodyLITERATE](https://www.thebodyliterate.com/)** - Executive Functions coaching for students of all ages
-- **[Mosaic Essay](https://aquamarine-sorbet-3ee281.netlify.app/)** - Turn your essay into a series of images and then reorganize them
-- **[PDF Summarizer](https://scholar-8zcz.vercel.app/)** - Automatically summarize a PDF and find key quotations
-- **[StudyDuck](https://main.d2fwq3nd7k27zn.amplifyapp.com/)** - Turn any textbook into a SparkNotes-like study set
-- **[Transcribe Lectures](https://transcriber-ten.vercel.app/)** - Transcribe audio directly into text and ask an LLM questions about it
-- **[College App Helper](https://app-check.vercel.app/)** - Let AI analyze your admissions application writing
+### RWEFCKED 🔍
 
-### Mindfulness & Well-being
+*A visual storytelling engine tracing vulnerabilities in digital supply chains.*
+![RWEFCKED](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/rwefcked.png)
+This project uses AI to track news and visualize data related to democratic health. Users can vote on metrics based on AI-surfaced news, creating a visual analysis of digital and political vulnerabilities. [View Project](https://rwefcked.vercel.app/)
 
-- **[Mountain](https://csb-7blsc9.vercel.app/)** - Send your worries into the cloud and watch them dissipate
-- **[Visualizing Mindfulness](https://visualizing-mindfulness.vercel.app/)** - Breathing animation and particles
-- **[Chat with Images](https://csb-myggi3.vercel.app/)** - Express how you feel with images
-- **[Sun Waves](https://cre8ture.github.io/sunWaves/)** - Visual creative relaxing house track visualization
+***
 
-### Deep Learning & AI Research
+## Educational & Assistive Technology
 
-- **[Fine Tuning GPT-2](https://github.com/cre8ture/GPT2_fine_tuning)** - Fine tuning a GPT-2 model to write song lyrics
-- **[Embedding and Quantization](https://github.com/cre8ture/Embeddings2)** - Using embeddings and quantization to vectorize data
-- **[Convolutional Network Flooding](https://github.com/cre8ture/CNN_flood_deep_learning.git)** - CNN analyzing data to predict flooding in Ireland
-- **[VIT Transformers](https://github.com/cre8ture/VIT_transformer)** - A customized version of the paper "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale"
-- **[Variational Autoencoder](https://github.com/cre8ture/VAE_encoders)** - Custom implementation of "An Introduction to Variational Autoencoders"
-- **[Stable Diffusion](https://github.com/cre8ture/stable_diffusion_experiments)** - Experiments with Stable Diffusion
+Tools that leverage technology to create more effective, engaging, and accessible learning environments.
 
-### Large Language Models
+### Flowt 💧
 
-- **[AI Life Coach](https://streaming-chat-gamma.vercel.app/)** - Using Motivational Interviewing as a protocol for an AI life coach
-- **[Therapy Style Tester](https://be-a-therapist.vercel.app/)** - Talk to different therapists from Freud, Beck, Perls, Calkins...
-- **[PDF Chatter](https://talk-to-pdf-alpha.vercel.app/)** - Converse with your documents
-- **[Diagram Creator](https://ai-graph3-fvcfgsm18-cre8ture.vercel.app/)** - Image generator to create education diagrams (Work In Progress)
+*Enabling fluid interaction across decentralized systems with the Flowt dashboard.*
+![Flowt Project](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/flowt.png)
+An EdTech platform that uses AI to summarize documents and generate quizzes. It features a gamified system for tracking focus and earning rewards to enhance learning and motivation. [View Project](https://flowt-notes.netlify.app/)
 
-### Creative Coding & Interactive Media
+### Grid2Web 🧠
 
-- **[Text into Waves](https://cre8ture.github.io/wordWaves/textWaves/)** - Turn text into waves based on readability score
-- **[Mindful Breathing Waves](https://cre8ture.github.io/wave-breathing/)** - Use arrow keys to control your breath
-- **[Vertigo: Lost in Space](https://kak2594.wixsite.com/vertigo)** - 2-D space game, built with Unity and C#
-- **[The Captain's Orders](https://earthling1111.itch.io/captainsorders)** - A choose your own adventure story built with Unity
+*Transforming infinite spatial grids into interactive, AI-powered web canvases.*
+![Grid2Web](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/grid2web.png)
+An AI-powered tool that transforms any website into various grid systems to teach web design principles. It allows users to learn through deconstruction and use AI to generate and edit new designs. [View Project](https://heartfelt-gecko-17747d.netlify.app/)
 
-### Performance & Creative Work
+### Scratchpad ✏️
 
-- **[Creature in the City](https://www.youtube.com/watch?v=f1UOvrAfUaQ&t=39s)** - Solo performance of my work at Roulette in Brooklyn
-- **[Impossible Dance](https://vimeo.com/148194108)** - Improvisation based on Melinda Ring's Impossible Dance
-- **[Creature on the Dock](https://www.youtube.com/watch?v=EkU9oVNoBqQ)** - Creature series on a dock in Vermont
-- **[Endless Loop](https://www.youtube.com/watch?v=Ocw_3ksBj0U&list=UUcllGY-SS0MDaRfZQhI3pAA&index=57)** - Creature series Endless Loop at Judson Memorial Church
-- **[Creature on the Porch](https://www.youtube.com/watch?v=irEwoGN6I-s&t=103s)** - Creature series on a porch in Vermont with Brubeck
-- **[atrain](https://vimeo.com/97986774)** - Creature series at the NY Transit Museum
+*A vector graphics sketchpad for AI-powered diagramming.*
+![Scratchpad](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/73631e623193104e372433ed34336b75d8c28692/images/simple_sketch.png)
+A tool for sketching with vector graphics, allowing users to share creations and use AI to generate diagrams from text prompts. It operates on a JSON-based canvas, similar to Excalidraw or Mermaid.js. [View Project](#)
 
-### Other Projects
+### Movement Analysis 🏃‍♂️
 
-- **[AWS Serverless Lambda Function](https://drive.google.com/file/d/11L8JMoiMj0ARg_u6SyLzST2WAxO-NoCv/view?usp=sharing)** - Presentation on AWS Lambda Functions for Cloud Computing Harvard Course
+*Visualizing biomechanical data to understand movement and behavior patterns.*
+![Movement Analysis](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/movement_analysis.png)
+This application uses AI pose tracking to help users learn physical movements, track posture, and even automatically generate music based on their body motion, blending wellness with creative expression. [View Project](https://tranquil-alpaca-403967.netlify.app/)
+
+### Somtatkai 🎭
+
+*An introspective collage—abstracting memory and identity into dynamic layers.*
+![Somtatkai](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/somtatkai.png)
+A free AI resource designed to assist learners with ADHD. The platform provides mindfulness tools and leverages deep research into specialized AI search to create a more focused learning environment. [View Project](https://embodiedlearner.com/)
+
+***
+
+## Blockchain & Generative Art
+
+Exploring the intersection of decentralized technology and digital creativity to produce unique, verifiable art.
+
+### Algorand 🌐
+
+*Building decentralized solutions atop Algorand’s secure blockchain protocol.*
+![Algorand Project](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/algorand.png)
+This project leverages the Algorand network for generative art, algorithmically creating unique ink paintings. The resulting artworks are minted and published on-chain as verifiable NFTs.
+
+***
+
+## Foundational Web Development
+
+An archive of past work demonstrating core skills in web design and application development.
+
+### Portfolio 🎨
+
+*A curated portfolio showcasing innovative applications and design intuition.*
+![Portfolio](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/portfolio.png)
+An archival version of my personal portfolio from the pre-ChatGPT era, showcasing foundational skills in web development, UI/UX, and innovative application design. [View Project](https://portfolio-kai-kleinbard-sand.vercel.app/graph)
+`;
+
+// Quick Start Guide - Markdown Content
+const QUICK_START_MARKDOWN = `# Quick Start Guide - AI Textbook Editor
+
+Welcome to your **AI-First Textbook Editor**! This is a local-first, privacy-focused document editor that runs entirely in your browser.
+
+## 🚀 Getting Started
+
+### First Steps
+1. **Start Writing**: Just begin typing in the editor - your content is automatically saved locally
+2. **Switch Modes**: Use the tabs at the top to switch between Markdown and WYSIWYG editing
+3. **AI Assistant**: Click the chat icon in the sidebar to get AI help with your writing
+
+### Key Features
+
+#### 📁 File Management
+- **Open Folder**: Click the folder icon to open a directory of markdown files
+- **New File**: Create new documents with the + icon
+- **Save File**: Download your work as a markdown file
+- **Auto-Save**: Your work is automatically saved locally in your browser
+
+#### 🤖 AI Integration
+- **Smart Assistance**: Get help with writing, editing, and formatting
+- **Knowledge Base**: The AI can reference your other documents for context
+- **Perfect Markdown**: AI responses are formatted in clean markdown
+
+#### 📋 Document Organization
+- **Outline View**: See your document structure in the sidebar
+- **Heading Navigation**: Click any heading in the outline to jump to that section
+- **File Browser**: Manage multiple documents in the files panel
+
+### Writing Tips
+
+#### Using Headings
+\`\`\`markdown
+# Main Title
+## Section Heading
+### Subsection
+\`\`\`
+
+#### Adding Links
+\`\`\`markdown
+[Link Text](https://example.com)
+\`\`\`
+
+#### Including Images
+\`\`\`markdown
+![Alt Text](https://example.com/image.jpg)
+\`\`\`
+
+#### Code Blocks
+\`\`\`markdown
+\`\`\`javascript
+console.log("Hello World!");
+\`\`\`
+\`\`\`
+
+### Keyboard Shortcuts
+- \`Ctrl/Cmd + B\`: Bold
+- \`Ctrl/Cmd + I\`: Italic
+- \`Ctrl/Cmd + K\`: Insert link
+- \`Ctrl/Cmd + Shift + I\`: Insert image
+
+### Privacy & Local-First
+- ✅ Everything saves locally in your browser
+- ✅ No data sent to servers (except AI requests)
+- ✅ Works offline once loaded
+- ✅ Download as PWA for desktop use
+
+### Need Help?
+- Use the AI chat for writing assistance
+- Check the outline panel for document structure
+- Switch between Markdown and WYSIWYG modes as needed
+
+### Advanced Features
+
+#### URL Parameters
+You can open specific files directly by adding a query parameter to the URL:
+- \`?file=my-document.md\` - Opens a specific file in WYSIWYG mode
+- \`?file=quick-start.md\` - Opens the quick start guide
+- \`?file=https://example.com/document.md\` - Opens an external markdown file
+
+#### Examples:
+- \`https://yourapp.com/?file=my-notes.md\`
+- \`https://yourapp.com/?file=quick-start.md\`
 
 ---
 
-## Contact & Collaboration
-
-I'm always interested in collaborating on projects that bridge technology, education, and human experience. Whether you're working on AI accessibility, educational technology, or embodied computing, I'd love to connect!
-
-**Keywords:** AI, Education Technology, Neurodiversity, Embodied Computing, Deep Learning, Large Language Models, Accessibility, Motivational Interviewing, Dance, Martial Arts
+**Ready to start writing?** Just begin typing below or use the AI assistant to help you get started!
 `;
 
 // Export the markdown content for ES6 modules
-export { KAI_PROFILE_MARKDOWN }; 
+export { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN }; 
