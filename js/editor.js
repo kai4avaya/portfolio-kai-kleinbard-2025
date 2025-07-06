@@ -40,12 +40,33 @@ export class Editor {
                 let initialEditType = 'markdown'; // Default for returning users
                 
                 try {
-                    if (requestedFile) {
-                        // User specified a file via URL parameter
-                        console.log('Loading requested file:', requestedFile);
-                        initialEditType = 'wysiwyg'; // Always use WYSIWYG for specific files
-                        initialContent = await this.loadFileContent(requestedFile);
-                                    } else if (isFirstTimeUser) {
+                                    if (requestedFile) {
+                    // User specified a file via URL parameter
+                    console.log('Loading requested file:', requestedFile);
+                    initialEditType = 'wysiwyg'; // Always use WYSIWYG for specific files
+                    initialContent = await this.loadFileContent(requestedFile);
+                    
+                    // Ensure both bundled documents are available in IndexedDB
+                    try {
+                        const { KAI_PROFILE_MARKDOWN, QUICK_START_MARKDOWN } = await import('./kaiProfile.js');
+                        
+                        // Save Kai profile if it doesn't exist
+                        const kaiProfileFile = await indexedDBService.getFile(CONFIG.EDITOR.KAI_PROFILE_FILE);
+                        if (!kaiProfileFile) {
+                            await indexedDBService.saveFile(CONFIG.EDITOR.KAI_PROFILE_FILE, KAI_PROFILE_MARKDOWN, 'welcome');
+                            console.log('Kai profile saved to IndexedDB for URL parameter access');
+                        }
+                        
+                        // Save quick start guide if it doesn't exist
+                        const quickStartFile = await indexedDBService.getFile(CONFIG.EDITOR.QUICK_START_FILE);
+                        if (!quickStartFile) {
+                            await indexedDBService.saveFile(CONFIG.EDITOR.QUICK_START_FILE, QUICK_START_MARKDOWN, 'quick-start');
+                            console.log('Quick start guide saved to IndexedDB for URL parameter access');
+                        }
+                    } catch (error) {
+                        console.error('Error ensuring bundled documents are available:', error);
+                    }
+                } else if (isFirstTimeUser) {
                     // First-time user - show quick start guide
                     console.log('Loading quick start guide for first-time user');
                     initialEditType = 'wysiwyg';

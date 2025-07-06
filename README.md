@@ -141,4 +141,13 @@ The modular structure makes it easy to:
 
 - **"showDirectoryPicker" errors**: This is expected in sandboxed environments and doesn't affect functionality
 - **"ResizeObserver loop" warnings**: These are benign warnings from the Toast UI library
-- **AI not responding**: Check your API key configuration in `config.js` 
+- **AI not responding**: Check your API key configuration in `config.js`
+
+## Contribute
+
+I’d love your help making this project even better!  
+
+Check out the repo on GitHub and give it a star ⭐:  
+https://github.com/kai4avaya/portfolio-kai-kleinbard-2025  
+
+Feel free to open issues, share feedback, or submit pull requests—every bit helps!

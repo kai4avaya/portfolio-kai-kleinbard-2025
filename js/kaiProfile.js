@@ -1,19 +1,11 @@
 // Kai Kleinbard Profile - Markdown Content
 const KAI_PROFILE_MARKDOWN = `# About Kai Kleinbard
 
-## About This AI Editor
-
-This profile was created using my **AI-First Textbook Editor** - a local-first, privacy-focused document editor that runs entirely in your browser. Everything you write is saved locally on your device, and you can download it as a Progressive Web App (PWA) for offline use. The editor preserves publicly accessible images and integrates AI assistance while keeping your content private and secure.
-
----
-
-## About Kai Kleinbard
-
 ![Kai Kleinbard](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/master/images/kai-kleinbard-edtech.png)
 
-With a background rooted in technology and education, Kai Kleinbard brings a unique blend of expertise to his work. His academic journey includes research on ML systems at the University of Pennsylvania, a focus on computer-human interaction and design at Harvard, and an analytics degree from Georgia Tech.
+I’ve always been drawn to both tech and education. I kicked off my academic journey researching ML systems at the University of Pennsylvania, dove into computer-human interaction and design at Harvard, and wrapped things up with an analytics degree from Georgia Tech.
 
-Currently, Kai builds generative art systems and continues to explore the rich intersection of art, human movement, AI, and education. He is driven by a passion for creating more equitable and intuitive learning experiences, using technology to bridge the gap between the digital and physical worlds.
+Right now, I’m having a blast building generative art systems and diving into that sweet spot where art, movement, AI, and learning collide. My driving force is crafting more intuitive, equitable learning experiences—using technology to blur the line between the digital and the physical.
 
 ***
 
@@ -98,7 +90,13 @@ An archive of past work demonstrating core skills in web design and application 
 *A curated portfolio showcasing innovative applications and design intuition.*
 ![Portfolio](https://raw.githubusercontent.com/kai4avaya/portfolio-kai-kleinbard-2025/7440274865b9cbf416220e3c5dc4a3d7c413f4d5/images/portfolio.png)
 An archival version of my personal portfolio from the pre-ChatGPT era, showcasing foundational skills in web development, UI/UX, and innovative application design. [View Project](https://portfolio-kai-kleinbard-sand.vercel.app/graph)
-`;
+
+## About This AI Editor
+
+This profile was created using my **AI-First Textbook Editor** - a local-first, privacy-focused document editor that runs entirely in your browser. Everything you write is saved locally on your device, and you can download it as a Progressive Web App (PWA) for offline use. The editor preserves publicly accessible images and integrates AI assistance while keeping your content private and secure.
+
+-Kai Kleinbard
+- Email: bakuk@gmail.com`;
 
 // Quick Start Guide - Markdown Content
 const QUICK_START_MARKDOWN = `# Quick Start Guide - AI Textbook Editor
